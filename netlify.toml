@@ -39,5 +39,5 @@ Content-Type = "application/xml"
 Cache-Control = "public, max-age=86400"
 
 [build]
-command = "npx vite build"
+command = "npm run build"
 publish = "dist"

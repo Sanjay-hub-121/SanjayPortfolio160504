@@ -57,7 +57,7 @@ export default function Contact({ profile }: ContactProps) {
       icon: Github,
       label: 'GitHub',
       value: 'Sanjay-hub-121',
-      href: profile?.github || 'https://github.com/Sanjay-hub-121?tab=repositories',
+      href: profile?.github_repos || 'https://github.com/Sanjay-hub-121?tab=repositories',
     },
   ];
 

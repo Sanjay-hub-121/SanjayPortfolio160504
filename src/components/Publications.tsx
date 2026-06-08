@@ -8,13 +8,14 @@ export default function Publications({ publications }: PublicationsProps) {
   const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
+    if (publications.length === 0) return;
     const observer = new IntersectionObserver(
       (entries) => entries.forEach(e => e.target.classList.toggle('visible', e.isIntersecting)),
       { threshold: 0.1 }
     );
     sectionRef.current?.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, [publications]);
 
   if (publications.length === 0) return null;
 

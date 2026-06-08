@@ -6,10 +6,10 @@ import {
   Award, Briefcase, BookOpen, Trophy, Layers, User, ChevronDown, ChevronUp
 } from 'lucide-react';
 import type {
-  Profile, Skill, Project, Certification, Experience, Achievement, Training
+  Profile, Skill, Project, Certification, Experience, Achievement, Training, Publication
 } from '../lib/supabase';
 
-type SectionKey = 'profile' | 'skills' | 'projects' | 'certifications' | 'experience' | 'achievements' | 'training';
+type SectionKey = 'profile' | 'skills' | 'projects' | 'certifications' | 'experience' | 'achievements' | 'training' | 'publications';
 
 function useToast() {
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -63,12 +63,13 @@ export default function AdminDashboard() {
   const [experience, setExperience] = useState<Experience[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [training, setTraining] = useState<Training[]>([]);
+  const [publications, setPublications] = useState<Publication[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
 
   useEffect(() => { loadAll(); }, []);
 
   const loadAll = async () => {
-    const [p, s, pr, c, e, a, t] = await Promise.all([
+    const [p, s, pr, c, e, a, t, pub] = await Promise.all([
       supabase.from('profile').select('*').maybeSingle(),
       supabase.from('skills').select('*').order('sort_order'),
       supabase.from('projects').select('*').order('sort_order'),
@@ -76,6 +77,7 @@ export default function AdminDashboard() {
       supabase.from('experience').select('*').order('sort_order'),
       supabase.from('achievements').select('*').order('sort_order'),
       supabase.from('training').select('*').order('sort_order'),
+      supabase.from('publications').select('*').order('sort_order'),
     ]);
     if (p.data) { setProfile(p.data); setProfileId(p.data.id); }
     if (s.data) setSkills(s.data);
@@ -84,6 +86,7 @@ export default function AdminDashboard() {
     if (e.data) setExperience(e.data);
     if (a.data) setAchievements(a.data);
     if (t.data) setTraining(t.data);
+    if (pub.data) setPublications(pub.data);
   };
 
   const toggle = (k: SectionKey) => setOpenSection(prev => prev === k ? k : k);
@@ -125,6 +128,7 @@ export default function AdminDashboard() {
   const patchExp = (id: string, patch: Partial<Experience>) => setExperience(s => s.map(x => x.id === id ? { ...x, ...patch } : x));
   const patchAch = (id: string, patch: Partial<Achievement>) => setAchievements(s => s.map(x => x.id === id ? { ...x, ...patch } : x));
   const patchTr = (id: string, patch: Partial<Training>) => setTraining(s => s.map(x => x.id === id ? { ...x, ...patch } : x));
+  const patchPub = (id: string, patch: Partial<Publication>) => setPublications(s => s.map(x => x.id === id ? { ...x, ...patch } : x));
 
   const saveRow = async (table: string, id: string, patch: Record<string, unknown>) => {
     setSaving(id);
@@ -474,6 +478,48 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+
+        {/* PUBLICATIONS */}
+        <div>
+          <SectionHeader icon={BookOpen} title="Publications" open={openSection === 'publications'} onToggle={() => setOpenSection('publications')} />
+          {openSection === 'publications' && (
+            <div className="bg-bg-secondary border border-blue-500/10 border-t-0 rounded-b-xl p-6 -mt-1">
+              <div className="space-y-4 mb-4">
+                {publications.map(pub => (
+                  <div key={pub.id} className="bg-bg-card border border-white/5 rounded-xl p-4 space-y-3">
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div><label className={labelCls}>Topic / Title</label><input className={inputCls} value={pub.topic} onChange={e => patchPub(pub.id, { topic: e.target.value })} /></div>
+                      <div><label className={labelCls}>Author Name</label><input className={inputCls} value={pub.author_name} onChange={e => patchPub(pub.id, { author_name: e.target.value })} /></div>
+                    </div>
+                    <div><label className={labelCls}>Co-Authors (optional)</label><input className={inputCls} value={pub.co_authors ?? ''} placeholder="e.g. Dr. Jane Doe, Prof. Smith" onChange={e => patchPub(pub.id, { co_authors: e.target.value || null })} /></div>
+                    <div><label className={labelCls}>Conference / Proceeding Name</label><input className={inputCls} value={pub.conference_name} onChange={e => patchPub(pub.id, { conference_name: e.target.value })} /></div>
+                    <div className="grid sm:grid-cols-3 gap-3">
+                      <div><label className={labelCls}>Date</label><input className={inputCls} value={pub.date ?? ''} placeholder="March 2025" onChange={e => patchPub(pub.id, { date: e.target.value || null })} /></div>
+                      <div><label className={labelCls}>Location</label><input className={inputCls} value={pub.location ?? ''} placeholder="Chennai, India" onChange={e => patchPub(pub.id, { location: e.target.value || null })} /></div>
+                      <div><label className={labelCls}>ISBN</label><input className={inputCls} value={pub.isbn ?? ''} placeholder="978-X-XXX-XXXXX-X" onChange={e => patchPub(pub.id, { isbn: e.target.value || null })} /></div>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => saveRow('publications', pub.id, { topic: pub.topic, author_name: pub.author_name, co_authors: pub.co_authors, conference_name: pub.conference_name, date: pub.date, location: pub.location, isbn: pub.isbn })}
+                        disabled={saving === pub.id}
+                        className="w-8 h-8 flex items-center justify-center bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg transition-colors"
+                      >
+                        <Save size={13} />
+                      </button>
+                      <button
+                        onClick={() => deleteItem('publications', pub.id, setPublications as Parameters<typeof deleteItem>[2])}
+                        className="w-8 h-8 flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <AddPublicationForm onAdd={item => addItem('publications', item, setPublications as (d: unknown[]) => void)} />
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
@@ -582,6 +628,39 @@ function AddTrainingForm({ onAdd }: { onAdd: (item: Record<string, unknown>) => 
       <div className="w-32"><label className={labelCls}>Duration</label><input className={inputCls} placeholder="5 Days" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} /></div>
       <button onClick={() => { if (form.title) { onAdd({ ...form, sort_order: 99 }); setForm({ title: '', duration: '' }); } }} className="btn-outline !py-2 !text-xs whitespace-nowrap">
         <Plus size={13} />Add
+      </button>
+    </div>
+  );
+}
+
+function AddPublicationForm({ onAdd }: { onAdd: (item: Record<string, unknown>) => void }) {
+  const [form, setForm] = useState({ topic: '', author_name: '', co_authors: '', conference_name: '', date: '', location: '', isbn: '' });
+  const inputCls = "w-full bg-bg-elevated border border-white/10 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 placeholder-slate-600";
+  const labelCls = "block text-xs text-slate-400 mb-1 font-medium";
+  return (
+    <div className="border-t border-white/5 pt-4 space-y-3">
+      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Add New Publication</p>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div><label className={labelCls}>Topic / Title</label><input className={inputCls} placeholder="Paper title" value={form.topic} onChange={e => setForm(f => ({ ...f, topic: e.target.value }))} /></div>
+        <div><label className={labelCls}>Author Name</label><input className={inputCls} placeholder="Your name" value={form.author_name} onChange={e => setForm(f => ({ ...f, author_name: e.target.value }))} /></div>
+      </div>
+      <div><label className={labelCls}>Co-Authors (optional)</label><input className={inputCls} placeholder="e.g. Dr. Jane Doe, Prof. Smith" value={form.co_authors} onChange={e => setForm(f => ({ ...f, co_authors: e.target.value }))} /></div>
+      <div><label className={labelCls}>Conference / Proceeding Name</label><input className={inputCls} placeholder="International Conference on..." value={form.conference_name} onChange={e => setForm(f => ({ ...f, conference_name: e.target.value }))} /></div>
+      <div className="grid sm:grid-cols-3 gap-3">
+        <div><label className={labelCls}>Date</label><input className={inputCls} placeholder="March 2025" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} /></div>
+        <div><label className={labelCls}>Location</label><input className={inputCls} placeholder="Chennai, India" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} /></div>
+        <div><label className={labelCls}>ISBN</label><input className={inputCls} placeholder="978-X-XXX-XXXXX-X" value={form.isbn} onChange={e => setForm(f => ({ ...f, isbn: e.target.value }))} /></div>
+      </div>
+      <button
+        onClick={() => {
+          if (form.topic && form.author_name && form.conference_name) {
+            onAdd({ ...form, co_authors: form.co_authors || null, date: form.date || null, location: form.location || null, isbn: form.isbn || null, sort_order: 99 });
+            setForm({ topic: '', author_name: '', co_authors: '', conference_name: '', date: '', location: '', isbn: '' });
+          }
+        }}
+        className="btn-outline !py-2 !text-xs"
+      >
+        <Plus size={13} />Add Publication
       </button>
     </div>
   );

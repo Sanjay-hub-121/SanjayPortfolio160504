@@ -74,3 +74,16 @@ export type Training = {
   sort_order: number;
   created_at: string;
 };
+
+export type Publication = {
+  id: string;
+  topic: string;
+  author_name: string;
+  co_authors: string | null;
+  conference_name: string;
+  date: string | null;
+  location: string | null;
+  isbn: string | null;
+  sort_order: number;
+  created_at: string;
+};
